@@ -56,7 +56,7 @@ inline Vec3 operator*(const Vec3& vec, const float multiplier)
 
 inline Vec3 operator*(const float multiplier, const Vec3& vec)
 {
-	return Vec3(vec.x * multiplier, vec.y * multiplier, vec.x * multiplier);
+	return Vec3(vec.x * multiplier, vec.y * multiplier, vec.z * multiplier);
 }
 
 inline Vec3 normalize(const Vec3& vec)
