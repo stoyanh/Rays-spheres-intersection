@@ -59,11 +59,10 @@ inline Vec3 operator*(const float multiplier, const Vec3& vec)
 	return Vec3(vec.x * multiplier, vec.y * multiplier, vec.x * multiplier);
 }
 
-Vec3 normalize(const Vec3& vec)
+inline Vec3 normalize(const Vec3& vec)
 {
 	float length = vec.length();
-	Vec3 copy = vec;
-	return copy * (1.f / length);
+	return vec * (1.f / length);
 }
 
 #endif /* VEC3_H_ */
