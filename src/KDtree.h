@@ -119,7 +119,6 @@ private:
 	unsigned leftChild(const unsigned index) const;
 
 	BoundingBox createBoundingBox(const Spheres& spheres) const;
-	BoundingBox createBoundingBox(const vector<Sphere>& spheres) const;
 	SAHCost chooseSplittingAxis(const Spheres& spheres, const BoundingBox& bbox) const;
 	int spheresCount(const Spheres &spheres, Axis axis, const float from, const float to) const;
 	void minSAHCost(const Spheres& spheres, const BoundingBox& bbox, Axis axis, SAHCost& sahCost) const;

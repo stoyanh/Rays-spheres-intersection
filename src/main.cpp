@@ -7,7 +7,7 @@
 int main()
 {
 	Spheres spheres;
-	const int size = 1000;
+	const int size = 100000000;
 	for(int i = 0; i < 3; ++i)
 	{
 		for(int j = 0; j < size; ++j)
@@ -19,6 +19,8 @@ int main()
 	{
 		spheres.radiuses.push_back(2.f);
 	}
+
+	spheres.count = size;
 
 	KDTree tree;
 	tree.build(spheres);
