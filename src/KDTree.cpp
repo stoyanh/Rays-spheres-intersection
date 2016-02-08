@@ -123,7 +123,7 @@ SAHCost KDTree::chooseSplittingAxis(const vector<Sphere>& spheres, const Boundin
 			bbox.split(axis, leftPlane, left, right);
 
 			int spheresLeft = spheresCount(spheres, axis, bbox.vmin[axis], leftPlane);
-			int spheresRight = spheres.size() - spheresLeft;
+			int spheresRight = spheresCount(spheres, axis, leftPlane, bbox.vmax[axis]);
 
 			float sah = surfaceAreaHeuristic(bbox, axis, leftPlane, spheresLeft, spheresRight);
 			if(sah < sahCost.cost)
@@ -140,7 +140,7 @@ SAHCost KDTree::chooseSplittingAxis(const vector<Sphere>& spheres, const Boundin
 
 			bbox.split(axis, rightPlane, left, right);
 			spheresLeft = spheresCount(spheres, axis, bbox.vmin[axis], rightPlane);
-			spheresRight = spheres.size() - spheresLeft;
+			spheresRight = spheresCount(spheres, axis, rightPlane, bbox.vmax[axis]);
 
 			sah = surfaceAreaHeuristic(bbox, axis, rightPlane, spheresLeft, spheresRight);
 			if(sah < sahCost.cost)
