@@ -18,14 +18,16 @@ struct Sphere
 
 struct Rays
 {
-	std::vector<float> originX, originY, originZ;
-	std::vector<float> directionX, directionY, directionZ;
+	std::vector<float> originCoords[3];
+	std::vector<float> directionCoords[3];
+	int count;
 };
 
 struct Spheres
 {
-	std::vector<float> centerX, centerY, centerZ;
+	std::vector<float> centerCoords[3];
 	std::vector<float> radiuses;
+	int count;
 };
 
 #endif /* COMMON_H_ */

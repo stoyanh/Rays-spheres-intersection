@@ -3,14 +3,16 @@
 
 #include "Common.h"
 #include <limits>
+#include <memory>
 
 using std::vector;
+using std::unique_ptr;
 
 struct KDLeaf
 {
 	unsigned flagAndOffset;
 	/**
-	 * bits 0..30 offset
+	 * bits 0..30 Children index in leavesChildren
 	 * bit 31 flag whether the node is leaf
 	 * */
 };
@@ -24,11 +26,6 @@ struct KDInner
 	 * bits 2..30 offset
 	 * bit 31 flag whether the node is leaf
 	 * */
-};
-
-struct KDChildrenPointer
-{
-
 };
 
 union KDNode
@@ -59,11 +56,6 @@ struct SAHCost
 	float splitPos;
 };
 
-struct StackNode
-{
-
-};
-
 struct BoundingBox
 {
 	BoundingBox()
@@ -91,11 +83,18 @@ struct BoundingBox
 	Vec3 vmax;
 };
 
+struct StackNode
+{
+	int nodeIdx;
+	BoundingBox bbox;
+	vector<int> sphereIndices;
+};
+
 class KDTree
 {
 public:
-	void build(const vector<Sphere>& spheres);
-
+	void build(const Spheres& spheres);
+	int getSize()const { return nodes.size(); }
 private:
 	bool isLeaf(const KDNode& node) const
 	{
@@ -121,11 +120,18 @@ private:
 
 	BoundingBox createBoundingBox(const Spheres& spheres) const;
 	BoundingBox createBoundingBox(const vector<Sphere>& spheres) const;
-	SAHCost chooseSplittingAxis(const vector<Sphere>& spheres, const BoundingBox& bbox) const;
-	int spheresCount(const vector<Sphere>&spheres, Axis axis, const float from, const float to) const;
+	SAHCost chooseSplittingAxis(const Spheres& spheres, const BoundingBox& bbox) const;
+	int spheresCount(const Spheres &spheres, Axis axis, const float from, const float to) const;
+	void minSAHCost(const Spheres& spheres, const BoundingBox& bbox, Axis axis, SAHCost& sahCost) const;
+	void initInnerNode(unsigned nodeIdx, Axis axis, float splitPos, unsigned firstChiledIdx);
+	void initLeafNode(unsigned nodeIdx, unsigned dataIdx);
 
-	static const int maxSpheresInBox = 8;
-	std::vector<KDNode> nodes;
+	static const int maxSpheresInLeaf = 12;
+	static const int maxRecursionDepht = 36;
+
+	vector<KDNode> nodes;
+	vector<vector<int>> leavesChildren;
+	Spheres spheres;
 };
 
 
