@@ -4,6 +4,8 @@
 #include "Common.h"
 #include <limits>
 
+using std::vector;
+
 struct KDLeaf
 {
 	unsigned flagAndOffset;
@@ -40,6 +42,26 @@ enum Axis
 	AXIS_X = 0,
 	AXIS_Y = 1,
 	AXIS_Z = 2,
+	AXIS_NONE,
+};
+
+enum SpherePosition
+{
+	LEFT,
+	RIGHT,
+	INTERSECT,
+};
+
+struct SAHCost
+{
+	float cost;
+	Axis splitAxis;
+	float splitPos;
+};
+
+struct StackNode
+{
+
 };
 
 struct BoundingBox
@@ -60,6 +82,11 @@ struct BoundingBox
 		right.vmin[axis] = where;
 
 	}
+
+	bool inBoundingBox(float coord, Axis axis) const
+	{
+		return vmin[axis] <= coord && vmax[axis] >= coord;
+	}
 	Vec3 vmin;
 	Vec3 vmax;
 };
@@ -67,7 +94,7 @@ struct BoundingBox
 class KDTree
 {
 public:
-	void build(const Spheres& spheres);
+	void build(const vector<Sphere>& spheres);
 
 private:
 	bool isLeaf(const KDNode& node) const
@@ -85,10 +112,17 @@ private:
 		return node.inner.flagDimAndOffset & 0x3;
 	}
 
-	unsigned leftChild(unsigned index) const;
+	float surface(const BoundingBox& box) const;
+
+	float surfaceAreaHeuristic(const BoundingBox& bbox, Axis axis, float spiltPoint,
+			int spheresLeft, int spheresRight) const;
+
+	unsigned leftChild(const unsigned index) const;
 
 	BoundingBox createBoundingBox(const Spheres& spheres) const;
-	Axis chooseSplittingAxis(const Spheres& spheres, float& where) const;
+	BoundingBox createBoundingBox(const vector<Sphere>& spheres) const;
+	SAHCost chooseSplittingAxis(const vector<Sphere>& spheres, const BoundingBox& bbox) const;
+	int spheresCount(const vector<Sphere>&spheres, Axis axis, const float from, const float to) const;
 
 	static const int maxSpheresInBox = 8;
 	std::vector<KDNode> nodes;

@@ -2,7 +2,7 @@
 #include <stack>
 #include <xmmintrin.h>
 
-unsigned KDTree::leftChild(unsigned index) const
+unsigned KDTree::leftChild(const unsigned index) const
 {
 	return index + offset(nodes[index]) / sizeof(KDNode);
 }
@@ -13,9 +13,6 @@ BoundingBox KDTree::createBoundingBox(const Spheres& spheres) const
 	float minXIndex = 0;
 	float minYIndex = 0;
 	float minZIndex = 0;
-
-	__m128 min = _mm_set_ps(spheres.centerX[0], spheres.centerY[0], spheres.centerZ[0], 0.f);
-	__m128 max = min;
 
 	float maxXIndex = minXIndex, maxYIndex = minYIndex, maxZIndex = minZIndex;
 
@@ -39,14 +36,128 @@ BoundingBox KDTree::createBoundingBox(const Spheres& spheres) const
 	return bbox;
 }
 
-Axis KDTree::chooseSplittingAxis(const Spheres& spheres, float& where) const
+BoundingBox KDTree::createBoundingBox(const vector<Sphere>& spheres) const
 {
-	Axis axis;
-	return axis;
+	BoundingBox bbox;
+
+	Vec3 min, max;
+
+	for(int i = 0; i < 3; ++i)
+	{
+		min[i] = spheres[0].center[i];
+		max[i] = min[i];
+	}
+
+	for(auto i = 0; i < spheres.size(); ++i)
+	{
+		for(int j = 0; j < 3; ++j)
+		{
+			min[j] = spheres[i].center[j] < min[j] ? spheres[i].center[j] : min[j];
+			max[j] = spheres[i].center[j] > max[j] ? spheres[i].center[j] : max[j];
+		}
+	}
+
+	bbox.vmin = min;
+	bbox.vmax = max;
+
+	return bbox;
 }
 
-void KDTree::build(const Spheres& spheres)
+float KDTree::surface(const BoundingBox& box) const
+{
+	float x = box.vmax.x - box.vmin.x;
+	float y = box.vmax.y - box.vmin.y;
+	float z = box.vmax.z - box.vmin.z;
+
+	return x * y + x * z + y * z;
+}
+
+float KDTree::surfaceAreaHeuristic(const BoundingBox& bbox, Axis axis, float splitPoint, int spheresLeft, int spheresRight) const
+{
+	BoundingBox left, right;
+	bbox.split(axis, splitPoint, left, right);
+
+	float surfaceLeft = surface(left);
+	float surfaceRight = surface(right);
+	float surfaceWhole = surface(bbox);
+
+	float costLeft = spheresLeft * (surfaceLeft / surfaceWhole);
+	float costRight = spheresRight * (surfaceRight / surfaceWhole);
+
+	return costLeft + costRight;
+}
+
+int KDTree::spheresCount(const vector<Sphere>& spheres, Axis axis, const float from, const float to) const
+{
+	int count = 0;
+	for(auto i = 0; i < spheres.size(); ++i)
+	{
+		float radius = spheres[i].radius;
+		if(spheres[i].center[axis] -  radius >= from && spheres[i].center[axis] + radius <= to)
+		{
+			++count;
+		}
+	}
+
+	return count;
+}
+
+SAHCost KDTree::chooseSplittingAxis(const vector<Sphere>& spheres, const BoundingBox& bbox) const
+{
+	SAHCost sahCost;
+	sahCost.cost = std::numeric_limits<float>::max();
+
+	for(int i = 0; i < 3; ++i)
+	{
+		Axis axis = static_cast<Axis>(i);
+		for(auto j = 0; j < spheres.size(); ++j)
+		{
+			float leftPlane = spheres[j].center[i] - spheres[j].radius;
+			float rightPlane = spheres[j].center[i] + spheres[j].radius;
+			if(!bbox.inBoundingBox(leftPlane, axis))
+			{
+				continue;
+			}
+
+			BoundingBox left, right;
+			bbox.split(axis, leftPlane, left, right);
+
+			int spheresLeft = spheresCount(spheres, axis, bbox.vmin[axis], leftPlane);
+			int spheresRight = spheres.size() - spheresLeft;
+
+			float sah = surfaceAreaHeuristic(bbox, axis, leftPlane, spheresLeft, spheresRight);
+			if(sah < sahCost.cost)
+			{
+				sahCost.cost = sah;
+				sahCost.splitAxis = axis;
+				sahCost.splitPos = leftPlane;
+			}
+
+			if(!bbox.inBoundingBox(rightPlane, axis))
+			{
+				continue;
+			}
+
+			bbox.split(axis, rightPlane, left, right);
+			spheresLeft = spheresCount(spheres, axis, bbox.vmin[axis], rightPlane);
+			spheresRight = spheres.size() - spheresLeft;
+
+			sah = surfaceAreaHeuristic(bbox, axis, rightPlane, spheresLeft, spheresRight);
+			if(sah < sahCost.cost)
+			{
+				sahCost.cost = sah;
+				sahCost.splitAxis = axis;
+				sahCost.splitPos = rightPlane;
+			}
+		}
+	}
+
+	return sahCost;
+}
+
+void KDTree::build(const vector<Sphere>& spheres)
 {
 	BoundingBox bbox = createBoundingBox(spheres);
+	SAHCost sahCost = chooseSplittingAxis(spheres, bbox);
 
 }
