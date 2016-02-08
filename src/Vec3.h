@@ -3,6 +3,8 @@
 
 #include <cmath>
 
+typedef __attribute__ ((vector_size(4 * sizeof(float)))) float floatVector4;
+
 struct Vec3
 {
 	union {
@@ -10,6 +12,7 @@ struct Vec3
 			float x, y, z;
 		};
 		float coords[3];
+		floatVector4 vec;
 	};
 
 	Vec3()
@@ -46,6 +49,16 @@ struct Vec3
 	float length() const
 	{
 		return sqrt(x * x + y * y + z * z);
+	}
+
+	float& operator[](const int index)
+	{
+		return coords[index];
+	}
+
+	const float& operator[](const int index) const
+	{
+		return coords[index];
 	}
 };
 
