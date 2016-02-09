@@ -49,7 +49,7 @@ BoundingBox KDTree::createBoundingBox(const Spheres& spheres) const
 	thread xValues(&KDTree::findMinMax, this, std::cref(spheres),
 			AXIS_X, std::ref(minCoords[0]), std::ref(maxCoords[0]));
 	thread yValues(&KDTree::findMinMax, this, std::cref(spheres),
-				AXIS_Y, std::ref(minCoords[1]), std::ref(maxCoords[2]));
+				AXIS_Y, std::ref(minCoords[1]), std::ref(maxCoords[1]));
 
 	findMinMax(spheres, AXIS_Z, minCoords[2], minCoords[2]);
 

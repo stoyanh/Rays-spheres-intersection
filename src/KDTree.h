@@ -150,7 +150,7 @@ private:
 
 	void findMinMax(const Spheres& spheres, Axis axis, float& min, float& max) const;
 
-	static const int maxSpheresInLeaf = 12;
+	static const int maxSpheresInLeaf = 24;
 	static const int maxNodes = 6000000;
 
 	vector<KDNode> nodes;
