@@ -1,5 +1,5 @@
 #include <iostream>
-#include "KDtree.h"
+#include "KDTree.h"
 #include <xmmintrin.h>
 #include "Vec3.h"
 #include <cstdlib>

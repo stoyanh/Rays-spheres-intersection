@@ -148,6 +148,8 @@ private:
 	void initInnerNode(unsigned nodeIdx, Axis axis, float splitPos, unsigned firstChiledIdx);
 	void initLeafNode(unsigned nodeIdx, unsigned dataIdx);
 
+	void findMinMax(const Spheres& spheres, Axis axis, float& min, float& max) const;
+
 	static const int maxSpheresInLeaf = 12;
 	static const int maxNodes = 6000000;
 

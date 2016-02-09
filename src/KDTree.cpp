@@ -1,4 +1,4 @@
-#include "KDtree.h"
+#include "KDTree.h"
 #include <stack>
 #include <thread>
 #include <algorithm>
@@ -23,37 +23,41 @@ unsigned KDTree::rightChild(const unsigned nodeIdx) const
 	return leftChild(nodeIdx) + 1;
 }
 
+void KDTree::findMinMax(const Spheres& spheres, Axis axis, float& min, float& max) const
+{
+	min = spheres.centerCoords[axis][0] - spheres.radiuses[0];
+	max = spheres.centerCoords[axis][0] + spheres.radiuses[0];
+
+	for(int i = 1; i < spheres.count; ++i)
+	{
+		if(spheres.centerCoords[axis][i] - spheres.radiuses[i] < min)
+		{
+			min = spheres.centerCoords[axis][i] - spheres.radiuses[i];
+		}
+
+		if(spheres.centerCoords[axis][i] + spheres.radiuses[i] > max)
+		{
+			max = spheres.centerCoords[axis][i] + spheres.radiuses[i];
+		}
+	}
+}
+
 BoundingBox KDTree::createBoundingBox(const Spheres& spheres) const
 {
 	BoundingBox bbox;
-	float minCoordIdx[3], maxCoordIdx[3];
-	for(int i = 0; i < 3; ++i)
-	{
-		minCoordIdx[i] = 0;
-		maxCoordIdx[i] = minCoordIdx[i];
-	}
+	float minCoords[3], maxCoords[3];
+	thread xValues(&KDTree::findMinMax, this, std::cref(spheres),
+			AXIS_X, std::ref(minCoords[0]), std::ref(maxCoords[0]));
+	thread yValues(&KDTree::findMinMax, this, std::cref(spheres),
+				AXIS_Y, std::ref(minCoords[1]), std::ref(maxCoords[2]));
 
-	for(int i = 0; i < 3; ++i)
-	{
-		for(int j = 1; j < spheres.centerCoords[i].size(); ++j)
-		{
-			minCoordIdx[i] = spheres.centerCoords[i][j] < spheres.centerCoords[i][minCoordIdx[i]] ? j : minCoordIdx[i];
-			maxCoordIdx[i] = spheres.centerCoords[i][j] > spheres.centerCoords[i][maxCoordIdx[i]] ? j : maxCoordIdx[i];
-		}
-	}
+	findMinMax(spheres, AXIS_Z, minCoords[2], minCoords[2]);
 
-	float minRadiuses[3], maxRadiuses[3], minCoord[3], maxCoord[3];
-	for(int i = 0; i < 3; ++i)
-	{
-		minRadiuses[i] = spheres.radiuses[minCoordIdx[i]];
-		maxRadiuses[i] = spheres.radiuses[maxCoordIdx[i]];
+	xValues.join();
+	yValues.join();
 
-		minCoord[i] = spheres.centerCoords[i][minCoordIdx[i]] - minRadiuses[i];
-		maxCoord[i] = spheres.centerCoords[i][maxCoordIdx[i]] + maxRadiuses[i];
-	}
-
-	bbox.vmin = Vec3(minCoord[0], minCoord[1], minCoord[2]);
-	bbox.vmax = Vec3(maxCoord[0], maxCoord[1], maxCoord[2]);
+	bbox.vmin = Vec3(minCoords[0], minCoords[1], minCoords[2]);
+	bbox.vmax = Vec3(maxCoords[0], maxCoords[1], maxCoords[2]);
 
 	return bbox;
 }
