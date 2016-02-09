@@ -8,7 +8,7 @@
 int main()
 {
 	Spheres spheres;
-	const int size = 1000;
+	const int size = 1000000;
 	for(int i = 0; i < 3; ++i)
 	{
 		for(int j = 0; j < size; ++j)
@@ -16,6 +16,7 @@ int main()
 			spheres.centerCoords[i].push_back(j + 10);
 		}
 	}
+
 	for(int i = 0; i < size; ++i)
 	{
 		spheres.radiuses.push_back(2.f);
@@ -25,8 +26,9 @@ int main()
 
 	KDTree tree;
 	tree.build(spheres);
+	std::cout << "Tree built" << std::endl;
 
-	for(int i = 0; i < 10; ++i)
+	for(int i = 0; i < 100000; ++i)
 	{
 		Ray ray;
 		ray.origin = Vec3(0, 0, 0);
@@ -38,7 +40,7 @@ int main()
 
 		Vec3 intersectionPoint = ray.origin + data.tIntersection * ray.direction;
 
-		std::cout << data.intersection << std::endl;
+		//std::cout << data.intersection << std::endl;
 //		if(data.intersection)
 //		{
 //			for(int i = 0; i < 3; ++i)
