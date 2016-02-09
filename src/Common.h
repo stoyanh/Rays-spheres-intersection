@@ -33,7 +33,7 @@ struct Spheres
 struct IntersectionData
 {
 	bool intersection;
-	Vec3 point;
+	float tIntersection;
 };
 
 #endif /* COMMON_H_ */

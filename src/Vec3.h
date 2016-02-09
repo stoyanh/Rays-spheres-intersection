@@ -3,7 +3,7 @@
 
 #include <cmath>
 
-typedef __attribute__ ((vector_size(4 * sizeof(float)))) float Vec4;
+typedef __attribute__ ((vector_size(4 * sizeof(float)))) float Vec4Float;
 
 struct Vec3
 {
@@ -12,7 +12,7 @@ struct Vec3
 			float x, y, z;
 		};
 		float coords[3];
-		Vec4 vec;
+		Vec4Float vec;
 	};
 
 	Vec3()

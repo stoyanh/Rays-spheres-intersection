@@ -2,6 +2,7 @@
 #include "KDtree.h"
 #include <xmmintrin.h>
 #include "Vec3.h"
+#include <cstdlib>
 
 
 int main()
@@ -25,11 +26,27 @@ int main()
 	KDTree tree;
 	tree.build(spheres);
 
-	Ray ray;
-	ray.direction = Vec3(1, 1, 1);
+	for(int i = 0; i < 10; ++i)
+	{
+		Ray ray;
+		ray.origin = Vec3(0, 0, 0);
+		ray.direction = Vec3(1, 1, 1);
 
-	IntersectionData data = tree.intersectRay(ray);
+		ray.direction = normalize(ray.direction);
 
+		IntersectionData data = tree.intersectRay(ray);
+
+		Vec3 intersectionPoint = ray.origin + data.tIntersection * ray.direction;
+
+		std::cout << data.intersection << std::endl;
+//		if(data.intersection)
+//		{
+//			for(int i = 0; i < 3; ++i)
+//			{
+//				std::cout << intersectionPoint.coords[i] << std::endl;
+//			}
+//		}
+	}
 
 	return 0;
 }
