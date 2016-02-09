@@ -3,6 +3,8 @@
 #include <thread>
 #include <algorithm>
 #include <numeric>
+#include <xmmintrin.h>
+#include "Utils.h"
 
 using std::stack;
 using std::thread;
@@ -10,6 +12,7 @@ using std::sort;
 using std::iota;
 using std::min;
 using std::max;
+using std::numeric_limits;
 
 unsigned KDTree::leftChild(const unsigned nodeIdx) const
 {
@@ -143,7 +146,7 @@ SAHCost KDTree::chooseSplittingAxis(const Spheres& spheres, const BoundingBox& b
 	SAHCost sahCosts[3];
 	for(int i = 0; i < 3; ++i)
 	{
-		sahCosts[i].cost = std::numeric_limits<float>::max();
+		sahCosts[i].cost = numeric_limits<float>::max();
 	}
 
 	thread xCost(&KDTree::minSAHCost, this, std::cref(spheres), std::cref(bbox), AXIS_X, std::ref(sahCosts[0]));
@@ -260,12 +263,6 @@ void BoundingBox::intersectRay(const Ray& ray, float& tnear, float& tfar) const
 	tfar = min(min(max(t1, t2), max(t3, t4)), max(t6, t6));
 }
 
-IntersectionData KDTree::intersectRaySpheres(const Ray& ray, const vector<int>& spheresIndices) const
-{
-	IntersectionData result;
-	return result;
-}
-
 IntersectionData KDTree::intersectRay(const Ray& ray) const
 {
 	IntersectionData data;
@@ -283,9 +280,11 @@ IntersectionData KDTree::intersectRay(const Ray& ray) const
 		data.intersection = false;
 		return data;
 	}
-	data.intersection = true;
 
+	data.intersection = false;
 	stack<TraversalNode> st;
+
+	float invRayDir[3] = { 1.f / ray.direction[0], 1.f / ray.direction[1], 1.f / ray.direction[3] };
 
 	node.nodeIdx = 0; // root
 	while(1)
@@ -293,7 +292,7 @@ IntersectionData KDTree::intersectRay(const Ray& ray) const
 		while(!isLeaf(node.nodeIdx))
 		{
 			Axis axis = static_cast<Axis>(splittingAxis(node.nodeIdx));
-			float tsplit = (nodes[node.nodeIdx].inner.splitCoord - ray.origin[axis]) / ray.direction[axis];
+			float tsplit = (nodes[node.nodeIdx].inner.splitCoord - ray.origin[axis]) * invRayDir[axis];
 			if(tsplit <= node.tnear)
 			{
 				node.nodeIdx = rightChild(node.nodeIdx);
@@ -304,17 +303,30 @@ IntersectionData KDTree::intersectRay(const Ray& ray) const
 			}
 			else
 			{
-				TraversalNode tNode;
-				tNode.nodeIdx = rightChild(node.nodeIdx);
-				tNode.tnear = tsplit;
-				tNode.tfar = node.tfar;
-				st.push(tNode);
+				TraversalNode traversalNode;
+				traversalNode.nodeIdx = rightChild(node.nodeIdx);
+				traversalNode.tnear = tsplit;
+				traversalNode.tfar = node.tfar;
+				st.push(traversalNode);
 
 				node.nodeIdx = leftChild(node.nodeIdx);
 			}
 		}
 
+		data = Intersection::intersectRaySpheres(ray, leavesChildren[leafChildrenIdx(node.nodeIdx)], spheres);
+		if(data.intersection)
+		{
+			return data;
+		}
 
+		if(st.empty())
+		{
+			data.intersection = false;
+			return data;
+		}
+
+		node = st.top();
+		st.pop();
 	}
 }
 

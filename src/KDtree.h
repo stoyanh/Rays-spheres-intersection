@@ -110,17 +110,24 @@ public:
 	int getSize()const { return nodes.size(); }
 	int getLeaves()const { return leaves; }
 private:
-	bool isLeaf(const unsigned nodeIdx) const
+	inline bool isLeaf(const unsigned nodeIdx) const
 	{
 		return nodes[nodeIdx].inner.flagDimAndOffset & static_cast<unsigned>(1 << 31);
 	}
 
-	unsigned offset(const unsigned nodeIdx) const
+	inline unsigned offset(const unsigned nodeIdx) const
 	{
 		return nodes[nodeIdx].inner.flagDimAndOffset & 0x7FFFFFFC;
 	}
 
-	int splittingAxis(const unsigned nodeIdx) const
+	inline unsigned leafChildrenIdx(unsigned leafIdx) const
+	{
+		unsigned mask = 1 << 31;
+		mask = ~mask;
+		return nodes[leafIdx].leaf.flagAndOffset & mask;
+	}
+
+	inline int splittingAxis(const unsigned nodeIdx) const
 	{
 		return nodes[nodeIdx].inner.flagDimAndOffset & 0x3;
 	}
@@ -140,8 +147,6 @@ private:
 
 	void initInnerNode(unsigned nodeIdx, Axis axis, float splitPos, unsigned firstChiledIdx);
 	void initLeafNode(unsigned nodeIdx, unsigned dataIdx);
-
-	IntersectionData intersectRaySpheres(const Ray& ray, const vector<int>& spheresIndices) const;
 
 	static const int maxSpheresInLeaf = 12;
 	static const int maxNodes = 6000000;
