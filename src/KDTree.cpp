@@ -1,4 +1,4 @@
-#include "KDtree.h"
+#include "KDTree.h"
 #include <stack>
 #include <thread>
 #include <algorithm>
