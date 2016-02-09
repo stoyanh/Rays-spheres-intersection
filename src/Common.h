@@ -30,4 +30,10 @@ struct Spheres
 	int count;
 };
 
+struct IntersectionData
+{
+	bool intersection;
+	Vec3 point;
+};
+
 #endif /* COMMON_H_ */

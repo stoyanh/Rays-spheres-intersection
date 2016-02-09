@@ -8,10 +8,16 @@ using std::stack;
 using std::thread;
 using std::sort;
 using std::iota;
+using std::min;
+using std::max;
 
-unsigned KDTree::leftChild(const unsigned index) const
+unsigned KDTree::leftChild(const unsigned nodeIdx) const
 {
-	return index + offset(nodes[index]) / sizeof(KDNode);
+	return nodeIdx + offset(nodeIdx) / sizeof(KDNode);
+}
+unsigned KDTree::rightChild(const unsigned nodeIdx) const
+{
+	return leftChild(nodeIdx) + 1;
 }
 
 BoundingBox KDTree::createBoundingBox(const Spheres& spheres) const
@@ -173,14 +179,15 @@ void KDTree::build(const Spheres& spheres)
 {
 	leaves = 0;
 	this->spheres = spheres;
-	BoundingBox bbox = createBoundingBox(spheres);
+	sceneBBox = createBoundingBox(spheres);
+
 	int axis = static_cast<int>(AXIS_X);
 
 	KDNode root;
 	nodes.push_back(root);
 
 	StackNode stackNode;
-	stackNode.bbox = bbox;
+	stackNode.bbox = sceneBBox;
 	stackNode.nodeIdx = nodes.size() - 1;
 	stackNode.sphereIndices.resize(spheres.count);
 	iota(stackNode.sphereIndices.begin(), stackNode.sphereIndices.end(), 0);
@@ -235,3 +242,79 @@ void KDTree::build(const Spheres& spheres)
 		axis += 1;
 	}
 }
+
+
+void BoundingBox::intersectRay(const Ray& ray, float& tnear, float& tfar) const
+{
+	Vec3 invDir;
+	invDir.vec = 1.f / ray.direction.vec;
+
+	float t1 = (vmin.x - ray.origin.x) * invDir.x;
+	float t2 = (vmax.x - ray.origin.x) * invDir.x;
+	float t3 = (vmin.y - ray.origin.y) * invDir.y;
+	float t4 = (vmax.y - ray.origin.y) * invDir.y;
+	float t5 = (vmin.z - ray.origin.z) * invDir.z;
+	float t6 = (vmax.z - ray.origin.z) * invDir.z;
+
+	tnear = max(max(min(t1, t2), min(t3, t4)), min(t5, t6));
+	tfar = min(min(max(t1, t2), max(t3, t4)), max(t6, t6));
+}
+
+IntersectionData KDTree::intersectRaySpheres(const Ray& ray, const vector<int>& spheresIndices) const
+{
+	IntersectionData result;
+	return result;
+}
+
+IntersectionData KDTree::intersectRay(const Ray& ray) const
+{
+	IntersectionData data;
+	Ray rayCpy = ray;
+	rayCpy.direction = normalize(rayCpy.direction);
+
+	TraversalNode node;
+	node.tnear = 0.f;
+	node.tfar = std::numeric_limits<float>::max();
+
+	sceneBBox.intersectRay(rayCpy, node.tnear, node.tfar);
+
+	if(node.tnear > node.tfar)
+	{
+		data.intersection = false;
+		return data;
+	}
+	data.intersection = true;
+
+	stack<TraversalNode> st;
+
+	node.nodeIdx = 0; // root
+	while(1)
+	{
+		while(!isLeaf(node.nodeIdx))
+		{
+			Axis axis = static_cast<Axis>(splittingAxis(node.nodeIdx));
+			float tsplit = (nodes[node.nodeIdx].inner.splitCoord - ray.origin[axis]) / ray.direction[axis];
+			if(tsplit <= node.tnear)
+			{
+				node.nodeIdx = rightChild(node.nodeIdx);
+			}
+			else if(tsplit >= node.tfar)
+			{
+				node.nodeIdx = leftChild(node.nodeIdx);
+			}
+			else
+			{
+				TraversalNode tNode;
+				tNode.nodeIdx = rightChild(node.nodeIdx);
+				tNode.tnear = tsplit;
+				tNode.tfar = node.tfar;
+				st.push(tNode);
+
+				node.nodeIdx = leftChild(node.nodeIdx);
+			}
+		}
+
+
+	}
+}
+

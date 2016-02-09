@@ -2,6 +2,7 @@
 #define KDTREE_H_
 
 #include "Common.h"
+#include "Vec3.h"
 #include <limits>
 #include <memory>
 
@@ -56,6 +57,12 @@ struct SAHCost
 	float splitPos;
 };
 
+struct TraversalNode
+{
+	float tnear, tfar;
+	unsigned nodeIdx;
+};
+
 struct BoundingBox
 {
 	BoundingBox()
@@ -79,6 +86,9 @@ struct BoundingBox
 	{
 		return vmin[axis] <= coord && vmax[axis] >= coord;
 	}
+
+	void intersectRay(const Ray& ray, float& tnear, float& tfar) const;
+
 	Vec3 vmin;
 	Vec3 vmax;
 };
@@ -94,37 +104,44 @@ class KDTree
 {
 public:
 	void build(const Spheres& spheres);
+
+	IntersectionData intersectRay(const Ray& ray) const;
+
 	int getSize()const { return nodes.size(); }
 	int getLeaves()const { return leaves; }
 private:
-	bool isLeaf(const KDNode& node) const
+	bool isLeaf(const unsigned nodeIdx) const
 	{
-		return node.inner.flagDimAndOffset & static_cast<unsigned>(1 << 31);
+		return nodes[nodeIdx].inner.flagDimAndOffset & static_cast<unsigned>(1 << 31);
 	}
 
-	unsigned offset(const KDNode& node) const
+	unsigned offset(const unsigned nodeIdx) const
 	{
-		return node.inner.flagDimAndOffset & 0x7FFFFFFC;
+		return nodes[nodeIdx].inner.flagDimAndOffset & 0x7FFFFFFC;
 	}
 
-	int splittingDimension(const KDNode& node) const
+	int splittingAxis(const unsigned nodeIdx) const
 	{
-		return node.inner.flagDimAndOffset & 0x3;
+		return nodes[nodeIdx].inner.flagDimAndOffset & 0x3;
 	}
+
+	unsigned leftChild(const unsigned nodeIdx) const;
+	unsigned rightChild(const unsigned nodeIdx) const;
 
 	float surface(const BoundingBox& box) const;
 
 	float surfaceAreaHeuristic(const BoundingBox& bbox, Axis axis, float spiltPoint,
 			int spheresLeft, int spheresRight) const;
 
-	unsigned leftChild(const unsigned index) const;
-
 	BoundingBox createBoundingBox(const Spheres& spheres) const;
 	SAHCost chooseSplittingAxis(const Spheres& spheres, const BoundingBox& bbox) const;
 	int spheresCount(const Spheres &spheres, Axis axis, const float from, const float to) const;
 	void minSAHCost(const Spheres& spheres, const BoundingBox& bbox, Axis axis, SAHCost& sahCost) const;
+
 	void initInnerNode(unsigned nodeIdx, Axis axis, float splitPos, unsigned firstChiledIdx);
 	void initLeafNode(unsigned nodeIdx, unsigned dataIdx);
+
+	IntersectionData intersectRaySpheres(const Ray& ray, const vector<int>& spheresIndices) const;
 
 	static const int maxSpheresInLeaf = 12;
 	static const int maxNodes = 6000000;
@@ -132,6 +149,7 @@ private:
 	vector<KDNode> nodes;
 	vector<vector<int>> leavesChildren;
 	Spheres spheres;
+	BoundingBox sceneBBox;
 	int leaves;
 };
 
