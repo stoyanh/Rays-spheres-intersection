@@ -171,6 +171,7 @@ void KDTree::initLeafNode(unsigned nodeIdx, unsigned dataIdx)
 
 void KDTree::build(const Spheres& spheres)
 {
+	leaves = 0;
 	this->spheres = spheres;
 	BoundingBox bbox = createBoundingBox(spheres);
 	int axis = static_cast<int>(AXIS_X);
@@ -192,10 +193,11 @@ void KDTree::build(const Spheres& spheres)
 		StackNode stackNode = st.top();
 		st.pop();
 
-		if(stackNode.sphereIndices.size() <= maxSpheresInLeaf)
+		if(stackNode.sphereIndices.size() <= maxSpheresInLeaf || nodes.size() >= maxNodes)
 		{
 			leavesChildren.push_back(stackNode.sphereIndices);
-			initLeafNode(nodes.size() - 1, leavesChildren.size() - 1);
+			initLeafNode(stackNode.nodeIdx, leavesChildren.size() - 1);
+			++leaves;
 			continue;
 		}
 

@@ -95,6 +95,7 @@ class KDTree
 public:
 	void build(const Spheres& spheres);
 	int getSize()const { return nodes.size(); }
+	int getLeaves()const { return leaves; }
 private:
 	bool isLeaf(const KDNode& node) const
 	{
@@ -126,11 +127,12 @@ private:
 	void initLeafNode(unsigned nodeIdx, unsigned dataIdx);
 
 	static const int maxSpheresInLeaf = 12;
-	static const int maxRecursionDepht = 36;
+	static const int maxNodes = 6000000;
 
 	vector<KDNode> nodes;
 	vector<vector<int>> leavesChildren;
 	Spheres spheres;
+	int leaves;
 };
 
 
