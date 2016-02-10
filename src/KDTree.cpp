@@ -71,7 +71,8 @@ float KDTree::surface(const BoundingBox& box) const
 	return x * y + x * z + y * z;
 }
 
-float KDTree::surfaceAreaHeuristic(const BoundingBox& bbox, Axis axis, float splitPoint, int spheresLeft, int spheresRight) const
+float KDTree::surfaceAreaHeuristic(const BoundingBox& bbox, Axis axis, float splitPoint,
+		unsigned spheresLeft, unsigned spheresRight) const
 {
 	BoundingBox left, right;
 	bbox.split(axis, splitPoint, left, right);
@@ -86,9 +87,9 @@ float KDTree::surfaceAreaHeuristic(const BoundingBox& bbox, Axis axis, float spl
 	return costLeft + costRight;
 }
 
-int KDTree::spheresCount(const Spheres& spheres, Axis axis, const float from, const float to) const
+void KDTree::spheresCount(const Spheres& spheres, Axis axis, const float from, const float to, unsigned& count) const
 {
-	int count = 0;
+	count = 0;
 	for(auto i = 0; i < spheres.count; ++i)
 	{
 		float radius = spheres.radiuses[i];
@@ -98,11 +99,11 @@ int KDTree::spheresCount(const Spheres& spheres, Axis axis, const float from, co
 		}
 	}
 
-	return count;
 }
 
 void KDTree::minSAHCost(const Spheres& spheres, const BoundingBox& bbox, Axis axis, SAHCost& sahCost) const
 {
+	thread t;
 	for(auto i = 0; i < spheres.count; ++i)
 	{
 		float leftPlane = spheres.centerCoords[axis][i] - spheres.radiuses[i];
@@ -115,8 +116,11 @@ void KDTree::minSAHCost(const Spheres& spheres, const BoundingBox& bbox, Axis ax
 		BoundingBox left, right;
 		bbox.split(axis, leftPlane, left, right);
 
-		int spheresLeft = spheresCount(spheres, axis, bbox.vmin[axis], leftPlane);
-		int spheresRight = spheresCount(spheres, axis, leftPlane, bbox.vmax[axis]);
+		unsigned spheresLeft = 0, spheresRight = 0;
+		t = thread(&KDTree::spheresCount, this, spheres, axis, bbox.vmin[axis],
+				leftPlane, std::ref(spheresLeft));
+		spheresCount(spheres, axis, leftPlane, bbox.vmax[axis], spheresRight);
+		t.join();
 
 		float sah = surfaceAreaHeuristic(bbox, axis, leftPlane, spheresLeft, spheresRight);
 		if(sah < sahCost.cost)
@@ -132,8 +136,10 @@ void KDTree::minSAHCost(const Spheres& spheres, const BoundingBox& bbox, Axis ax
 		}
 
 		bbox.split(axis, rightPlane, left, right);
-		spheresLeft = spheresCount(spheres, axis, bbox.vmin[axis], rightPlane);
-		spheresRight = spheresCount(spheres, axis, rightPlane, bbox.vmax[axis]);
+		t = thread(&KDTree::spheresCount, this, spheres, axis, bbox.vmin[axis],
+				rightPlane, std::ref(spheresLeft));
+		spheresCount(spheres, axis, rightPlane, bbox.vmax[axis], spheresRight);
+		t.join();
 
 		sah = surfaceAreaHeuristic(bbox, axis, rightPlane, spheresLeft, spheresRight);
 		if(sah < sahCost.cost)

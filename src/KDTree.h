@@ -138,11 +138,11 @@ private:
 	float surface(const BoundingBox& box) const;
 
 	float surfaceAreaHeuristic(const BoundingBox& bbox, Axis axis, float spiltPoint,
-			int spheresLeft, int spheresRight) const;
+			unsigned spheresLeft, unsigned spheresRight) const;
 
 	BoundingBox createBoundingBox(const Spheres& spheres) const;
 	SAHCost chooseSplittingAxis(const Spheres& spheres, const BoundingBox& bbox) const;
-	int spheresCount(const Spheres &spheres, Axis axis, const float from, const float to) const;
+	void spheresCount(const Spheres &spheres, Axis axis, const float from, const float to, unsigned& count) const;
 	void minSAHCost(const Spheres& spheres, const BoundingBox& bbox, Axis axis, SAHCost& sahCost) const;
 
 	void initInnerNode(unsigned nodeIdx, Axis axis, float splitPos, unsigned firstChiledIdx);
