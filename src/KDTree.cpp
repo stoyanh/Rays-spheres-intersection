@@ -3,12 +3,10 @@
 #include <thread>
 #include <algorithm>
 #include <numeric>
-#include <xmmintrin.h>
 #include "Utils.h"
 
 using std::stack;
 using std::thread;
-using std::sort;
 using std::iota;
 using std::min;
 using std::max;
@@ -261,7 +259,7 @@ void BoundingBox::intersectRay(const Ray& ray, float& tnear, float& tfar) const
 {
 	Vec3 invDir;
 	invDir.vec = 1.f / ray.direction.vec;
-
+	// TODO write it SIMD
 	float t1 = (vmin.x - ray.origin.x) * invDir.x;
 	float t2 = (vmax.x - ray.origin.x) * invDir.x;
 	float t3 = (vmin.y - ray.origin.y) * invDir.y;
