@@ -23,32 +23,37 @@ struct Vec3
 	Vec3(float _x, float _y, float _z):
 		x(_x), y(_y), z(_z) {}
 
+	Vec3(const Vec4Float& vec)
+	{
+		this->vec = vec;
+	}
+
 	Vec3 operator+(const Vec3& rhs) const
 	{
-		return Vec3(x + rhs.x, y + rhs.y, z + rhs.z);
+		return Vec3(vec + rhs.vec);
 	}
 
 	Vec3 operator-(const Vec3& rhs) const
 	{
-		return Vec3(x - rhs.x, y - rhs.y, z - rhs.z);
+		return Vec3(vec - rhs.vec);
 	}
 
 	float operator*(const Vec3& rhs) const
 	{
-		return x * rhs.x + y * rhs.y  + z * rhs.z;
+		Vec4Float copy = vec * rhs.vec;
+		return copy[0] + copy[1] + copy[2];
 	}
 
 	Vec3& operator*=(const float multiplier)
 	{
-		x *= multiplier;
-		y *= multiplier;
-		z *= multiplier;
+		vec = vec * multiplier;
 		return *this;
 	}
 
 	float length() const
 	{
-		return sqrt(x * x + y * y + z * z);
+		Vec4Float copy = vec * vec;
+		return sqrt(copy[0] + copy[1] + copy[2]);
 	}
 
 	float& operator[](const int index)
@@ -62,20 +67,19 @@ struct Vec3
 	}
 };
 
-inline Vec3 operator*(const Vec3& vec, const float multiplier)
+inline Vec3 operator*(const Vec3& v, const float multiplier)
 {
-	return Vec3(vec.x * multiplier, vec.y * multiplier, vec.z * multiplier);
+	return Vec3(v.vec * multiplier);
 }
 
-inline Vec3 operator*(const float multiplier, const Vec3& vec)
+inline Vec3 operator*(const float multiplier, const Vec3& v)
 {
-	return Vec3(vec.x * multiplier, vec.y * multiplier, vec.z * multiplier);
+	return Vec3(v.vec * multiplier);
 }
 
-inline Vec3 normalize(const Vec3& vec)
+inline Vec3 normalize(const Vec3& v)
 {
-	float length = vec.length();
-	return vec * (1.f / length);
+	return Vec3(v.vec * (1.f / v.length()));
 }
 
 #endif /* VEC3_H_ */

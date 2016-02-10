@@ -23,37 +23,41 @@ unsigned KDTree::rightChild(const unsigned nodeIdx) const
 	return leftChild(nodeIdx) + 1;
 }
 
+void KDTree::findMinMax(const Spheres& spheres, Axis axis, float& min, float& max) const
+{
+	min = spheres.centerCoords[axis][0] - spheres.radiuses[0];
+	max = spheres.centerCoords[axis][0] + spheres.radiuses[0];
+
+	for(int i = 1; i < spheres.count; ++i)
+	{
+		if(spheres.centerCoords[axis][i] - spheres.radiuses[i] < min)
+		{
+			min = spheres.centerCoords[axis][i] - spheres.radiuses[i];
+		}
+
+		if(spheres.centerCoords[axis][i] + spheres.radiuses[i] > max)
+		{
+			max = spheres.centerCoords[axis][i] + spheres.radiuses[i];
+		}
+	}
+}
+
 BoundingBox KDTree::createBoundingBox(const Spheres& spheres) const
 {
 	BoundingBox bbox;
-	float minCoordIdx[3], maxCoordIdx[3];
-	for(int i = 0; i < 3; ++i)
-	{
-		minCoordIdx[i] = 0;
-		maxCoordIdx[i] = minCoordIdx[i];
-	}
+	float minCoords[3], maxCoords[3];
+	thread xValues(&KDTree::findMinMax, this, std::cref(spheres),
+			AXIS_X, std::ref(minCoords[0]), std::ref(maxCoords[0]));
+	thread yValues(&KDTree::findMinMax, this, std::cref(spheres),
+			AXIS_Y, std::ref(minCoords[1]), std::ref(maxCoords[1]));
 
-	for(int i = 0; i < 3; ++i)
-	{
-		for(int j = 1; j < spheres.centerCoords[i].size(); ++j)
-		{
-			minCoordIdx[i] = spheres.centerCoords[i][j] < spheres.centerCoords[i][minCoordIdx[i]] ? j : minCoordIdx[i];
-			maxCoordIdx[i] = spheres.centerCoords[i][j] > spheres.centerCoords[i][maxCoordIdx[i]] ? j : maxCoordIdx[i];
-		}
-	}
+	findMinMax(spheres, AXIS_Z, minCoords[2], maxCoords[2]);
 
-	float minRadiuses[3], maxRadiuses[3], minCoord[3], maxCoord[3];
-	for(int i = 0; i < 3; ++i)
-	{
-		minRadiuses[i] = spheres.radiuses[minCoordIdx[i]];
-		maxRadiuses[i] = spheres.radiuses[maxCoordIdx[i]];
+	xValues.join();
+	yValues.join();
 
-		minCoord[i] = spheres.centerCoords[i][minCoordIdx[i]] - minRadiuses[i];
-		maxCoord[i] = spheres.centerCoords[i][maxCoordIdx[i]] + maxRadiuses[i];
-	}
-
-	bbox.vmin = Vec3(minCoord[0], minCoord[1], minCoord[2]);
-	bbox.vmax = Vec3(maxCoord[0], maxCoord[1], maxCoord[2]);
+	bbox.vmin = Vec3(minCoords[0], minCoords[1], minCoords[2]);
+	bbox.vmax = Vec3(maxCoords[0], maxCoords[1], maxCoords[2]);
 
 	return bbox;
 }
@@ -67,7 +71,8 @@ float KDTree::surface(const BoundingBox& box) const
 	return x * y + x * z + y * z;
 }
 
-float KDTree::surfaceAreaHeuristic(const BoundingBox& bbox, Axis axis, float splitPoint, int spheresLeft, int spheresRight) const
+float KDTree::surfaceAreaHeuristic(const BoundingBox& bbox, Axis axis, float splitPoint,
+		unsigned spheresLeft, unsigned spheresRight) const
 {
 	BoundingBox left, right;
 	bbox.split(axis, splitPoint, left, right);
@@ -82,9 +87,9 @@ float KDTree::surfaceAreaHeuristic(const BoundingBox& bbox, Axis axis, float spl
 	return costLeft + costRight;
 }
 
-int KDTree::spheresCount(const Spheres& spheres, Axis axis, const float from, const float to) const
+void KDTree::spheresCount(const Spheres& spheres, Axis axis, const float from, const float to, unsigned& count) const
 {
-	int count = 0;
+	count = 0;
 	for(auto i = 0; i < spheres.count; ++i)
 	{
 		float radius = spheres.radiuses[i];
@@ -94,11 +99,11 @@ int KDTree::spheresCount(const Spheres& spheres, Axis axis, const float from, co
 		}
 	}
 
-	return count;
 }
 
 void KDTree::minSAHCost(const Spheres& spheres, const BoundingBox& bbox, Axis axis, SAHCost& sahCost) const
 {
+	thread t;
 	for(auto i = 0; i < spheres.count; ++i)
 	{
 		float leftPlane = spheres.centerCoords[axis][i] - spheres.radiuses[i];
@@ -111,8 +116,11 @@ void KDTree::minSAHCost(const Spheres& spheres, const BoundingBox& bbox, Axis ax
 		BoundingBox left, right;
 		bbox.split(axis, leftPlane, left, right);
 
-		int spheresLeft = spheresCount(spheres, axis, bbox.vmin[axis], leftPlane);
-		int spheresRight = spheresCount(spheres, axis, leftPlane, bbox.vmax[axis]);
+		unsigned spheresLeft = 0, spheresRight = 0;
+		t = thread(&KDTree::spheresCount, this, spheres, axis, bbox.vmin[axis],
+				leftPlane, std::ref(spheresLeft));
+		spheresCount(spheres, axis, leftPlane, bbox.vmax[axis], spheresRight);
+		t.join();
 
 		float sah = surfaceAreaHeuristic(bbox, axis, leftPlane, spheresLeft, spheresRight);
 		if(sah < sahCost.cost)
@@ -128,8 +136,10 @@ void KDTree::minSAHCost(const Spheres& spheres, const BoundingBox& bbox, Axis ax
 		}
 
 		bbox.split(axis, rightPlane, left, right);
-		spheresLeft = spheresCount(spheres, axis, bbox.vmin[axis], rightPlane);
-		spheresRight = spheresCount(spheres, axis, rightPlane, bbox.vmax[axis]);
+		t = thread(&KDTree::spheresCount, this, spheres, axis, bbox.vmin[axis],
+				rightPlane, std::ref(spheresLeft));
+		spheresCount(spheres, axis, rightPlane, bbox.vmax[axis], spheresRight);
+		t.join();
 
 		sah = surfaceAreaHeuristic(bbox, axis, rightPlane, spheresLeft, spheresRight);
 		if(sah < sahCost.cost)
@@ -313,7 +323,8 @@ IntersectionData KDTree::intersectRay(const Ray& ray) const
 			}
 		}
 
-		data = Intersection::intersectRaySpheres(ray, leavesChildren[leafChildrenIdx(node.nodeIdx)], spheres);
+		unsigned idx = leafChildrenIdx(node.nodeIdx);
+		data = Intersection::intersectRaySpheres(ray, leavesChildren[idx], spheres);
 		if(data.intersection)
 		{
 			return data;

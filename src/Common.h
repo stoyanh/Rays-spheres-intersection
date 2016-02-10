@@ -6,6 +6,12 @@
 
 struct Ray
 {
+	Ray(){}
+	Ray(const Vec3& origin, const Vec3& direction)
+	{
+		this->origin = origin;
+		this->direction = direction;
+	}
 	Vec3 origin;
 	Vec3 direction;
 };
@@ -18,9 +24,7 @@ struct Sphere
 
 struct Rays
 {
-	std::vector<float> originCoords[3];
-	std::vector<float> directionCoords[3];
-	int count;
+	std::vector<Ray> rays;
 };
 
 struct Spheres
