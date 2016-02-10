@@ -30,7 +30,6 @@ void intersectRaysSpheres(const Rays& rays, const Spheres& spheres, std::vector<
 {
 	KDTree tree;
 	tree.build(spheres);
-	std::cout << "Tree built\n";
 
 	int raysCount = rays.rays.size();
 	intersections.resize(raysCount);
