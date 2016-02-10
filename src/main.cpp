@@ -13,45 +13,38 @@ inline float Rand()
 int main()
 {
 	Spheres spheres;
-	const int size = 100000;
+	const int size = 10000000;
 	for(int i = 0; i < 3; ++i)
 	{
 		for(int j = 0; j < size; ++j)
 		{
-			spheres.centerCoords[i].push_back(j);//j + 10);
+			spheres.centerCoords[i].push_back(j + 10);
 		}
 	}
 
 	for(int i = 0; i < size; ++i)
 	{
-		spheres.radiuses.push_back(5.f);//2.f * i + 1.f);
+		spheres.radiuses.push_back(2.f * i + 1.f);
 	}
 
 	spheres.count = size;
 
-	//KDTree tree;
-	//tree.build(spheres);
-	//std::cout << "Tree built" << std::endl;
-
 	Rays rays;
-	//for(int i = 0; i < 10000; ++i)
-	//{
-		IntersectionData data;
-		Ray ray(Vec3(100, 100, 100), Vec3(0.5f, 0.5f, 0.5f));
-		intersectRaySpheres(ray, spheres, data);
-		//rays.rays.push_back(Ray(Vec3(Rand(), Rand(), Rand()), Vec3(Rand(), Rand(), Rand())));
-		//rays.rays.push_back(Ray(Vec3(100, 100, 100), Vec3(0.5f, 0.5f, 0.5f)));
-	//}
+	for(int i = 0; i < 30000000; ++i)
+	{
+		rays.rays.push_back(Ray(Vec3(Rand(), Rand(), Rand()), Vec3(Rand(), Rand(), Rand())));
+		//rays.rays.push_back(Ray(Vec3(0, 0, 0), Vec3(1.f, 1.f, 1.f)));
+	}
 
-	//vector<IntersectionData> data;
-	//intersectRaysSpheres(rays, spheres, data);
+	vector<IntersectionData> data;
+	intersectRaysSpheres(rays, spheres, data);
 
-//	int count = 0;
-//	for(int i = 0; i < data.size(); ++i)
-//	{
-//		if(data[i].intersection) ++count;
-//	}
-//
-//	std::cout << count << std::endl;
+	int count = 0;
+	for(int i = 0; i < data.size(); ++i)
+	{
+		if(data[i].intersection) ++count;
+	}
+
+	std::cout << count << std::endl;
 	return 0;
 }
