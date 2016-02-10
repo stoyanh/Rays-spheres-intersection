@@ -3,7 +3,12 @@
 #include <xmmintrin.h>
 #include "Vec3.h"
 #include <cstdlib>
+#include "RaySphereIntersect.h"
 
+inline float Rand()
+{
+	return static_cast<float>(rand()) / 1000.f;
+}
 
 int main()
 {
@@ -13,42 +18,40 @@ int main()
 	{
 		for(int j = 0; j < size; ++j)
 		{
-			spheres.centerCoords[i].push_back(j + 10);
+			spheres.centerCoords[i].push_back(j);//j + 10);
 		}
 	}
 
 	for(int i = 0; i < size; ++i)
 	{
-		spheres.radiuses.push_back(2.f);
+		spheres.radiuses.push_back(5.f);//2.f * i + 1.f);
 	}
 
 	spheres.count = size;
 
-	KDTree tree;
-	tree.build(spheres);
-	std::cout << "Tree built" << std::endl;
+	//KDTree tree;
+	//tree.build(spheres);
+	//std::cout << "Tree built" << std::endl;
 
-	for(int i = 0; i < 1000; ++i)
-	{
-		Ray ray;
-		ray.origin = Vec3(0, 0, 0);
-		ray.direction = Vec3(1, 1, 1);
+	Rays rays;
+	//for(int i = 0; i < 10000; ++i)
+	//{
+		IntersectionData data;
+		Ray ray(Vec3(100, 100, 100), Vec3(0.5f, 0.5f, 0.5f));
+		intersectRaySpheres(ray, spheres, data);
+		//rays.rays.push_back(Ray(Vec3(Rand(), Rand(), Rand()), Vec3(Rand(), Rand(), Rand())));
+		//rays.rays.push_back(Ray(Vec3(100, 100, 100), Vec3(0.5f, 0.5f, 0.5f)));
+	//}
 
-		ray.direction = normalize(ray.direction);
+	//vector<IntersectionData> data;
+	//intersectRaysSpheres(rays, spheres, data);
 
-		IntersectionData data = tree.intersectRay(ray);
-
-		Vec3 intersectionPoint = ray.origin + data.tIntersection * ray.direction;
-
-		std::cout << data.intersection << std::endl;
-//		if(data.intersection)
-//		{
-//			for(int i = 0; i < 3; ++i)
-//			{
-//				std::cout << intersectionPoint.coords[i] << std::endl;
-//			}
-//		}
-	}
-
+//	int count = 0;
+//	for(int i = 0; i < data.size(); ++i)
+//	{
+//		if(data[i].intersection) ++count;
+//	}
+//
+//	std::cout << count << std::endl;
 	return 0;
 }

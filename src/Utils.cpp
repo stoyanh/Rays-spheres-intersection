@@ -88,8 +88,8 @@ namespace Intersection
 				D = _mm_and_ps(squareRootD, mask);
 
 				Vec4Float t1, t2;
-				t1 = _mm_or_ps((-b - squareRootD) / 2.f, _mm_andnot_ps(mask, D));
-				t2 = _mm_or_ps((-b + squareRootD) / 2.f, _mm_andnot_ps(mask, D));
+				t1 = _mm_or_ps((-b - squareRootD) * 0.5f, _mm_andnot_ps(mask, D));
+				t2 = _mm_or_ps((-b + squareRootD) * 0.5f, _mm_andnot_ps(mask, D));
 
 				float tRes = result.tIntersection;
 				for(int j = 0; j < 4; ++j)
