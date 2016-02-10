@@ -1,7 +1,6 @@
 #include "RaySphereIntersect.h"
 #include "KDTree.h"
 #include <thread>
-#include <iostream>
 
 using std::thread;
 
