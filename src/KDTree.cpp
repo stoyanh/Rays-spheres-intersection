@@ -51,7 +51,7 @@ BoundingBox KDTree::createBoundingBox(const Spheres& spheres) const
 	thread yValues(&KDTree::findMinMax, this, std::cref(spheres),
 			AXIS_Y, std::ref(minCoords[1]), std::ref(maxCoords[1]));
 
-	findMinMax(spheres, AXIS_Z, minCoords[2], minCoords[2]);
+	findMinMax(spheres, AXIS_Z, minCoords[2], maxCoords[2]);
 
 	xValues.join();
 	yValues.join();
@@ -317,7 +317,8 @@ IntersectionData KDTree::intersectRay(const Ray& ray) const
 			}
 		}
 
-		data = Intersection::intersectRaySpheres(ray, leavesChildren[leafChildrenIdx(node.nodeIdx)], spheres);
+		unsigned idx = leafChildrenIdx(node.nodeIdx);
+		data = Intersection::intersectRaySpheres(ray, leavesChildren[idx], spheres);
 		if(data.intersection)
 		{
 			return data;

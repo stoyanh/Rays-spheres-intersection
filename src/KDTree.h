@@ -122,8 +122,9 @@ private:
 
 	inline unsigned leafChildrenIdx(unsigned leafIdx) const
 	{
-		unsigned mask = ~(1 << 31);
-		unsigned res = nodes[leafIdx].leaf.flagAndOffset & mask;
+		unsigned mask = 1 << 31;
+		unsigned res = nodes[leafIdx].leaf.flagAndOffset & ~mask;
+		return res;
 	}
 
 	inline int splittingAxis(const unsigned nodeIdx) const
