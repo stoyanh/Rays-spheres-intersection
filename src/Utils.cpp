@@ -45,6 +45,7 @@ namespace Intersection
 	{
 		const int maxSpheresToCheck = 4;
 		IntersectionData result;
+		result.intersection = false;
 		result.tIntersection = numeric_limits<float>::max();
 
 		int remainder = spheresIndices.size() % maxSpheresToCheck;
@@ -102,32 +103,32 @@ namespace Intersection
 						tRes = t2[j];
 					}
 				}
-				if(tRes	!= result.tIntersection)
-				{
-					result.tIntersection = tRes;
+
+				if(tRes	< result.tIntersection)
+
 					result.intersection = true;
-					return result;
+					result.tIntersection = tRes;
 				}
 			}
-		}
+
 			for(int i = nonSIMDStartPos; i < spheresIndices.size(); ++i)
 			{
+				IntersectionData data;
 				int idx = spheresIndices[i];
 				Sphere sphere;
 				sphere.center.x = spheres.centerCoords[0][idx];
 				sphere.center.y = spheres.centerCoords[1][idx];
 				sphere.center.z = spheres.centerCoords[2][idx];
 				sphere.radius = spheres.radiuses[idx];
-				result = intersectSingleSphere(ray, sphere);
+				data = intersectSingleSphere(ray, sphere);
 
-				if(result.intersection)
+				if(data.intersection && data.tIntersection < result.tIntersection)
 				{
-					return result;
+					result = data;
 				}
 			}
 
-		result.intersection = false;
-		return result;
+			return result;
 	}
 
 }

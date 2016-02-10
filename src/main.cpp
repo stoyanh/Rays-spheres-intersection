@@ -8,7 +8,7 @@
 int main()
 {
 	Spheres spheres;
-	const int size = 1000000;
+	const int size = 100000;
 	for(int i = 0; i < 3; ++i)
 	{
 		for(int j = 0; j < size; ++j)
@@ -28,7 +28,7 @@ int main()
 	tree.build(spheres);
 	std::cout << "Tree built" << std::endl;
 
-	for(int i = 0; i < 100000; ++i)
+	for(int i = 0; i < 1000; ++i)
 	{
 		Ray ray;
 		ray.origin = Vec3(0, 0, 0);
@@ -40,7 +40,7 @@ int main()
 
 		Vec3 intersectionPoint = ray.origin + data.tIntersection * ray.direction;
 
-		//std::cout << data.intersection << std::endl;
+		std::cout << data.intersection << std::endl;
 //		if(data.intersection)
 //		{
 //			for(int i = 0; i < 3; ++i)
